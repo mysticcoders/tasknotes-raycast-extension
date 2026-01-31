@@ -19,6 +19,12 @@
       "title": "Quick Add Task",
       "description": "Create a new task in TaskNotes",
       "mode": "view"
+    },
+    {
+      "name": "view-tasks",
+      "title": "View Tasks",
+      "description": "View and manage your TaskNotes tasks",
+      "mode": "view"
     }
   ],
   "preferences": [
