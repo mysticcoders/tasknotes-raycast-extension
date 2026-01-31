@@ -20,6 +20,8 @@ declare namespace Preferences {
   export type CheckConnection = ExtensionPreferences & {}
   /** Preferences accessible in the `quick-add` command */
   export type QuickAdd = ExtensionPreferences & {}
+  /** Preferences accessible in the `view-tasks` command */
+  export type ViewTasks = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -27,5 +29,7 @@ declare namespace Arguments {
   export type CheckConnection = {}
   /** Arguments passed to the `quick-add` command */
   export type QuickAdd = {}
+  /** Arguments passed to the `view-tasks` command */
+  export type ViewTasks = {}
 }
 
