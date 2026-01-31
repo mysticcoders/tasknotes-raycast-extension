@@ -47,16 +47,25 @@ function createAPIError(message: string, code?: string): APIError {
   return { message, code };
 }
 
-export async function checkConnection(): Promise<{ connected: boolean; error?: string }> {
+export async function checkConnection(): Promise<{
+  connected: boolean;
+  error?: string;
+}> {
   try {
     const url = `${getBaseUrl()}/api/tasks?limit=1`;
     console.log("Checking connection to:", url);
     const response = await fetch(url, { headers: getAuthHeaders() });
     console.log("Response status:", response.status);
-    return { connected: response.ok, error: response.ok ? undefined : `HTTP ${response.status}` };
+    return {
+      connected: response.ok,
+      error: response.ok ? undefined : `HTTP ${response.status}`,
+    };
   } catch (err) {
     console.log("Connection error:", err);
-    return { connected: false, error: err instanceof Error ? err.message : String(err) };
+    return {
+      connected: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -69,7 +78,9 @@ export interface FetchTasksFilters {
 
 export async function fetchTasks(filters?: FetchTasksFilters): Promise<Task[]> {
   try {
-    const response = await fetch(`${getBaseUrl()}/api/tasks`, { headers: getAuthHeaders() });
+    const response = await fetch(`${getBaseUrl()}/api/tasks`, {
+      headers: getAuthHeaders(),
+    });
 
     if (!response.ok) {
       const error = createAPIError(
@@ -88,12 +99,12 @@ export async function fetchTasks(filters?: FetchTasksFilters): Promise<Task[]> {
         tasks = tasks.filter((t) =>
           filters.completed
             ? completedStatuses.includes(t.status)
-            : !completedStatuses.includes(t.status)
+            : !completedStatuses.includes(t.status),
         );
       }
       if (filters.project) {
         tasks = tasks.filter((t) =>
-          t.projects?.some((p) => p.includes(filters.project!))
+          t.projects?.some((p) => p.includes(filters.project!)),
         );
       }
       if (filters.tag) {

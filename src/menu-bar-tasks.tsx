@@ -1,4 +1,10 @@
-import { MenuBarExtra, Icon, launchCommand, LaunchType, open } from "@raycast/api";
+import {
+  MenuBarExtra,
+  Icon,
+  launchCommand,
+  LaunchType,
+  open,
+} from "@raycast/api";
 import { useEffect, useState } from "react";
 import { fetchTasks } from "./api/client";
 import { getCachedTasks } from "./cache";
@@ -18,7 +24,9 @@ export default function MenuBarTasks() {
       } catch {
         const cachedTasks = await getCachedTasks();
         if (cachedTasks) {
-          const openCachedTasks = cachedTasks.filter((task) => task.status !== "done");
+          const openCachedTasks = cachedTasks.filter(
+            (task) => task.status !== "done",
+          );
           setTasks(openCachedTasks);
         }
       } finally {
