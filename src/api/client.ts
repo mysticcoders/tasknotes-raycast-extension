@@ -1,5 +1,6 @@
 import { getPreferenceValues } from "@raycast/api";
 import { Preferences, Task, TaskCreateInput, APIError } from "../types";
+import { setCachedTasks } from "../cache";
 
 function getBaseUrl(): string {
   const preferences = getPreferenceValues<Preferences>();
@@ -67,7 +68,9 @@ export async function fetchTasks(filters?: FetchTasksFilters): Promise<Task[]> {
     }
 
     const data = await response.json();
-    return data as Task[];
+    const tasks = data as Task[];
+    await setCachedTasks(tasks);
+    return tasks;
   } catch (error) {
     if (error && typeof error === "object" && "message" in error) {
       throw error;
