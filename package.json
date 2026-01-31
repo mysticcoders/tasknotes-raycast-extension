@@ -13,6 +13,12 @@
       "title": "Check TaskNotes Connection",
       "description": "Verify connection to TaskNotes API",
       "mode": "view"
+    },
+    {
+      "name": "quick-add",
+      "title": "Quick Add Task",
+      "description": "Create a new task in TaskNotes",
+      "mode": "view"
     }
   ],
   "preferences": [

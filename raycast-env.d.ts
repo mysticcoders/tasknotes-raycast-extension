@@ -18,10 +18,14 @@ declare type Preferences = ExtensionPreferences
 declare namespace Preferences {
   /** Preferences accessible in the `check-connection` command */
   export type CheckConnection = ExtensionPreferences & {}
+  /** Preferences accessible in the `quick-add` command */
+  export type QuickAdd = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
   /** Arguments passed to the `check-connection` command */
   export type CheckConnection = {}
+  /** Arguments passed to the `quick-add` command */
+  export type QuickAdd = {}
 }
 
