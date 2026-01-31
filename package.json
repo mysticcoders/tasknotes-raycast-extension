@@ -42,6 +42,13 @@
       "type": "textfield",
       "required": true,
       "default": "8080"
+    },
+    {
+      "name": "apiToken",
+      "title": "API Token",
+      "description": "Authentication token for TaskNotes HTTP API (optional)",
+      "type": "password",
+      "required": false
     }
   ],
   "dependencies": {

@@ -9,7 +9,9 @@
 
 type ExtensionPreferences = {
   /** API Port - Port number for TaskNotes HTTP API */
-  "apiPort": string
+  "apiPort": string,
+  /** API Token - Authentication token for TaskNotes HTTP API (optional) */
+  "apiToken"?: string
 }
 
 /** Preferences accessible in all the extension's commands */

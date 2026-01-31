@@ -8,9 +8,20 @@ import {
 } from "../types";
 import { setCachedTasks } from "../cache";
 
+function getPreferences(): Preferences {
+  return getPreferenceValues<Preferences>();
+}
+
 function getBaseUrl(): string {
-  const preferences = getPreferenceValues<Preferences>();
-  return `http://127.0.0.1:${preferences.apiPort}`;
+  return `http://127.0.0.1:${getPreferences().apiPort}`;
+}
+
+function getAuthHeaders(): HeadersInit {
+  const { apiToken } = getPreferences();
+  if (apiToken) {
+    return { Authorization: `Bearer ${apiToken}` };
+  }
+  return {};
 }
 
 async function fetchWithTimeout(
@@ -40,7 +51,7 @@ export async function checkConnection(): Promise<{ connected: boolean; error?: s
   try {
     const url = `${getBaseUrl()}/api/tasks?limit=1`;
     console.log("Checking connection to:", url);
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: getAuthHeaders() });
     console.log("Response status:", response.status);
     return { connected: response.ok, error: response.ok ? undefined : `HTTP ${response.status}` };
   } catch (err) {
@@ -58,7 +69,7 @@ export interface FetchTasksFilters {
 
 export async function fetchTasks(filters?: FetchTasksFilters): Promise<Task[]> {
   try {
-    const response = await fetch(`${getBaseUrl()}/api/tasks`);
+    const response = await fetch(`${getBaseUrl()}/api/tasks`, { headers: getAuthHeaders() });
 
     if (!response.ok) {
       const error = createAPIError(
@@ -109,6 +120,7 @@ export async function createTask(input: TaskCreateInput): Promise<Task> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(input),
     });
@@ -137,6 +149,7 @@ export async function toggleTaskStatus(id: string): Promise<Task> {
       `${getBaseUrl()}/api/tasks/${id}/toggle-status`,
       {
         method: "POST",
+        headers: getAuthHeaders(),
       },
     );
 
@@ -166,6 +179,7 @@ export async function fetchFilterOptions(): Promise<FilterOptions> {
       `${getBaseUrl()}/api/filter-options`,
       {
         method: "GET",
+        headers: getAuthHeaders(),
       },
     );
 
