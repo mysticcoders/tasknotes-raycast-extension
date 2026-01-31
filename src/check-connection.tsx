@@ -1,4 +1,12 @@
-import { Detail, ActionPanel, Action, showToast, Toast, openExtensionPreferences, getPreferenceValues } from "@raycast/api";
+import {
+  Detail,
+  ActionPanel,
+  Action,
+  showToast,
+  Toast,
+  openExtensionPreferences,
+  getPreferenceValues,
+} from "@raycast/api";
 import { useState, useEffect } from "react";
 import { checkConnection, fetchTasks } from "./api/client";
 import { Preferences } from "./types";
@@ -10,25 +18,35 @@ export default function CheckConnection() {
   const [error, setError] = useState<string | null>(null);
   const [cachedTaskCount, setCachedTaskCount] = useState<number | null>(null);
   const [cacheAgeMinutes, setCacheAgeMinutes] = useState<number | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const preferences = getPreferenceValues<Preferences>();
 
   useEffect(() => {
-    async function check() {
+    let cancelled = false;
+
+    async function performCheck() {
       try {
         const connected = await checkConnection();
+        if (cancelled) return;
         setIsConnected(connected);
         if (connected) {
           const tasks = await fetchTasks({ completed: false });
-          await showToast({ style: Toast.Style.Success, title: `Connected - cached ${tasks.length} tasks` });
+          if (cancelled) return;
+          await showToast({
+            style: Toast.Style.Success,
+            title: `Connected - cached ${tasks.length} tasks`,
+          });
         } else {
           const cacheValid = await isCacheValid();
           if (cacheValid) {
             const cached = await getCachedTasks();
-            if (cached) {
+            if (cached && !cancelled) {
               setCachedTaskCount(cached.length);
-              const timestampStr = await import("@raycast/api").then(m => m.LocalStorage.getItem<string>("tasknotes_tasks_timestamp"));
-              if (timestampStr) {
+              const timestampStr = await import("@raycast/api").then((m) =>
+                m.LocalStorage.getItem<string>("tasknotes_tasks_timestamp"),
+              );
+              if (timestampStr && !cancelled) {
                 const timestamp = parseInt(timestampStr, 10);
                 const ageMs = Date.now() - timestamp;
                 setCacheAgeMinutes(Math.floor(ageMs / 60000));
@@ -37,13 +55,22 @@ export default function CheckConnection() {
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Connection failed");
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Connection failed");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
-    check();
-  }, []);
+
+    performCheck();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [retryCount]);
 
   function retry() {
     setIsLoading(true);
@@ -51,41 +78,8 @@ export default function CheckConnection() {
     setIsConnected(false);
     setCachedTaskCount(null);
     setCacheAgeMinutes(null);
+    setRetryCount((c) => c + 1);
   }
-
-  useEffect(() => {
-    if (isLoading && !error && !isConnected) {
-      async function check() {
-        try {
-          const connected = await checkConnection();
-          setIsConnected(connected);
-          if (connected) {
-            const tasks = await fetchTasks({ completed: false });
-            await showToast({ style: Toast.Style.Success, title: `Connected - cached ${tasks.length} tasks` });
-          } else {
-            const cacheValid = await isCacheValid();
-            if (cacheValid) {
-              const cached = await getCachedTasks();
-              if (cached) {
-                setCachedTaskCount(cached.length);
-                const timestampStr = await import("@raycast/api").then(m => m.LocalStorage.getItem<string>("tasknotes_tasks_timestamp"));
-                if (timestampStr) {
-                  const timestamp = parseInt(timestampStr, 10);
-                  const ageMs = Date.now() - timestamp;
-                  setCacheAgeMinutes(Math.floor(ageMs / 60000));
-                }
-              }
-            }
-          }
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Connection failed");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-      check();
-    }
-  }, [isLoading, error, isConnected]);
 
   if (isLoading) {
     return <Detail isLoading={true} markdown="Checking connection..." />;
@@ -95,7 +89,10 @@ export default function CheckConnection() {
     let markdown = "";
 
     if (cachedTaskCount !== null) {
-      const ageText = cacheAgeMinutes === 0 ? "less than a minute" : `${cacheAgeMinutes} minute${cacheAgeMinutes === 1 ? "" : "s"}`;
+      const ageText =
+        cacheAgeMinutes === 0
+          ? "less than a minute"
+          : `${cacheAgeMinutes} minute${cacheAgeMinutes === 1 ? "" : "s"}`;
       markdown = `# Connection Unavailable
 
 Unable to connect to TaskNotes API at **localhost:${preferences.apiPort}**
@@ -134,7 +131,10 @@ Use the action below to update your preferences if needed.`;
         markdown={markdown}
         actions={
           <ActionPanel>
-            <Action title="Open Extension Preferences" onAction={openExtensionPreferences} />
+            <Action
+              title="Open Extension Preferences"
+              onAction={openExtensionPreferences}
+            />
             <Action title="Retry" onAction={retry} />
           </ActionPanel>
         }
@@ -151,7 +151,10 @@ Successfully connected to TaskNotes API at **localhost:${preferences.apiPort}**
 You're all set to use TaskNotes commands.`}
       actions={
         <ActionPanel>
-          <Action title="Open Extension Preferences" onAction={openExtensionPreferences} />
+          <Action
+            title="Open Extension Preferences"
+            onAction={openExtensionPreferences}
+          />
         </ActionPanel>
       }
     />

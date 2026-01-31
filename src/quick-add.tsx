@@ -1,4 +1,11 @@
-import { Form, ActionPanel, Action, showToast, Toast, popToRoot } from "@raycast/api";
+import {
+  Form,
+  ActionPanel,
+  Action,
+  showToast,
+  Toast,
+  popToRoot,
+} from "@raycast/api";
 import { useState } from "react";
 import { createTask } from "./api/client";
 
@@ -11,14 +18,20 @@ export default function QuickAdd() {
 
   async function handleSubmit(values: FormValues) {
     if (!values.title.trim()) {
-      await showToast({ style: Toast.Style.Failure, title: "Title is required" });
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Title is required",
+      });
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await showToast({ style: Toast.Style.Animated, title: "Creating task..." });
+      await showToast({
+        style: Toast.Style.Animated,
+        title: "Creating task...",
+      });
 
       const task = await createTask({ title: values.title.trim() });
 
@@ -30,9 +43,10 @@ export default function QuickAdd() {
 
       await popToRoot();
     } catch (error) {
-      const message = error && typeof error === "object" && "message" in error
-        ? (error as { message: string }).message
-        : "Failed to create task";
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? (error as { message: string }).message
+          : "Failed to create task";
 
       await showToast({
         style: Toast.Style.Failure,
