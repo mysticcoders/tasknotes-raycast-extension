@@ -22,6 +22,8 @@ declare namespace Preferences {
   export type QuickAdd = ExtensionPreferences & {}
   /** Preferences accessible in the `view-tasks` command */
   export type ViewTasks = ExtensionPreferences & {}
+  /** Preferences accessible in the `menu-bar-tasks` command */
+  export type MenuBarTasks = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -31,5 +33,7 @@ declare namespace Arguments {
   export type QuickAdd = {}
   /** Arguments passed to the `view-tasks` command */
   export type ViewTasks = {}
+  /** Arguments passed to the `menu-bar-tasks` command */
+  export type MenuBarTasks = {}
 }
 

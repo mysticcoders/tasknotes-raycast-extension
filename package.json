@@ -25,6 +25,13 @@
       "title": "View Tasks",
       "description": "View and manage your TaskNotes tasks",
       "mode": "view"
+    },
+    {
+      "name": "menu-bar-tasks",
+      "title": "TaskNotes Menu Bar",
+      "description": "Show open task count in menu bar",
+      "mode": "menu-bar",
+      "interval": "10m"
     }
   ],
   "preferences": [
