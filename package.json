@@ -10,9 +10,9 @@
   "commands": [
     {
       "name": "check-connection",
-      "title": "Check Connection",
-      "description": "Check if TaskNotes API is available",
-      "mode": "no-view"
+      "title": "Check TaskNotes Connection",
+      "description": "Verify connection to TaskNotes API",
+      "mode": "view"
     }
   ],
   "preferences": [
