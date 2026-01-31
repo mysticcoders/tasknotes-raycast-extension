@@ -10,7 +10,7 @@ import { setCachedTasks } from "../cache";
 
 function getBaseUrl(): string {
   const preferences = getPreferenceValues<Preferences>();
-  return `http://localhost:${preferences.apiPort}`;
+  return `http://127.0.0.1:${preferences.apiPort}`;
 }
 
 async function fetchWithTimeout(
@@ -36,39 +36,29 @@ function createAPIError(message: string, code?: string): APIError {
   return { message, code };
 }
 
-export async function checkConnection(): Promise<boolean> {
+export async function checkConnection(): Promise<{ connected: boolean; error?: string }> {
   try {
-    const response = await fetchWithTimeout(
-      `${getBaseUrl()}/api/tasks?limit=1`,
-      { method: "GET" },
-    );
-    return response.ok;
-  } catch {
-    return false;
+    const url = `${getBaseUrl()}/api/tasks?limit=1`;
+    console.log("Checking connection to:", url);
+    const response = await fetch(url);
+    console.log("Response status:", response.status);
+    return { connected: response.ok, error: response.ok ? undefined : `HTTP ${response.status}` };
+  } catch (err) {
+    console.log("Connection error:", err);
+    return { connected: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
 export interface FetchTasksFilters {
   project?: string;
   tag?: string;
-  priority?: number;
+  priority?: string;
   completed?: boolean;
 }
 
 export async function fetchTasks(filters?: FetchTasksFilters): Promise<Task[]> {
   try {
-    const url = new URL(`${getBaseUrl()}/api/tasks`);
-
-    if (filters) {
-      if (filters.project) url.searchParams.set("project", filters.project);
-      if (filters.tag) url.searchParams.set("tag", filters.tag);
-      if (filters.priority !== undefined)
-        url.searchParams.set("priority", String(filters.priority));
-      if (filters.completed !== undefined)
-        url.searchParams.set("completed", String(filters.completed));
-    }
-
-    const response = await fetchWithTimeout(url.toString(), { method: "GET" });
+    const response = await fetch(`${getBaseUrl()}/api/tasks`);
 
     if (!response.ok) {
       const error = createAPIError(
@@ -79,7 +69,30 @@ export async function fetchTasks(filters?: FetchTasksFilters): Promise<Task[]> {
     }
 
     const data = await response.json();
-    const tasks = data as Task[];
+    let tasks = (data.data?.tasks ?? data) as Task[];
+
+    if (filters) {
+      if (filters.completed !== undefined) {
+        const completedStatuses = ["done"];
+        tasks = tasks.filter((t) =>
+          filters.completed
+            ? completedStatuses.includes(t.status)
+            : !completedStatuses.includes(t.status)
+        );
+      }
+      if (filters.project) {
+        tasks = tasks.filter((t) =>
+          t.projects?.some((p) => p.includes(filters.project!))
+        );
+      }
+      if (filters.tag) {
+        tasks = tasks.filter((t) => t.tags?.includes(filters.tag!));
+      }
+      if (filters.priority) {
+        tasks = tasks.filter((t) => t.priority === filters.priority);
+      }
+    }
+
     await setCachedTasks(tasks);
     return tasks;
   } catch (error) {
@@ -109,7 +122,7 @@ export async function createTask(input: TaskCreateInput): Promise<Task> {
     }
 
     const data = await response.json();
-    return data as Task;
+    return (data.data?.task ?? data) as Task;
   } catch (error) {
     if (error && typeof error === "object" && "message" in error) {
       throw error;
@@ -136,7 +149,7 @@ export async function toggleTaskStatus(id: string): Promise<Task> {
     }
 
     const data = await response.json();
-    return data as Task;
+    return (data.data?.task ?? data) as Task;
   } catch (error) {
     if (error && typeof error === "object" && "message" in error) {
       throw error;
@@ -165,7 +178,7 @@ export async function fetchFilterOptions(): Promise<FilterOptions> {
     }
 
     const data = await response.json();
-    return data as FilterOptions;
+    return (data.data ?? data) as FilterOptions;
   } catch (error) {
     if (error && typeof error === "object" && "message" in error) {
       throw error;

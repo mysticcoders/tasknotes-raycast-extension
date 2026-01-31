@@ -27,10 +27,13 @@ export default function CheckConnection() {
 
     async function performCheck() {
       try {
-        const connected = await checkConnection();
+        const result = await checkConnection();
         if (cancelled) return;
-        setIsConnected(connected);
-        if (connected) {
+        setIsConnected(result.connected);
+        if (result.error) {
+          setError(result.error);
+        }
+        if (result.connected) {
           const tasks = await fetchTasks({ completed: false });
           if (cancelled) return;
           await showToast({
@@ -87,6 +90,7 @@ export default function CheckConnection() {
 
   if (!isConnected || error) {
     let markdown = "";
+    const debugUrl = `http://127.0.0.1:${preferences.apiPort}/api/tasks?limit=1`;
 
     if (cachedTaskCount !== null) {
       const ageText =
@@ -113,6 +117,8 @@ Use the action below to update your preferences if needed.`;
       markdown = `# Connection Failed
 
 Unable to connect to TaskNotes API at **localhost:${preferences.apiPort}**
+
+**Debug URL:** \`${debugUrl}\`
 
 ${error ? `**Error:** ${error}` : ""}
 

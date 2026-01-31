@@ -1,11 +1,17 @@
 export interface Task {
   id: string;
+  path: string;
   title: string;
-  completed: boolean;
-  project?: string;
-  tags?: string[];
-  priority?: number;
-  dueDate?: string;
+  status: string;
+  priority: string;
+  due: string | null;
+  scheduled: string | null;
+  contexts: string[];
+  projects: string[];
+  tags: string[];
+  dateCreated: string;
+  dateModified: string;
+  archived: boolean;
 }
 
 export interface TaskCreateInput {
@@ -21,8 +27,16 @@ export interface Preferences {
   apiPort: string;
 }
 
+export interface PriorityOption {
+  id: string;
+  value: string;
+  label: string;
+  color: string;
+  weight: number;
+}
+
 export interface FilterOptions {
   projects: string[];
   tags: string[];
-  priorities: number[];
+  priorities: PriorityOption[];
 }

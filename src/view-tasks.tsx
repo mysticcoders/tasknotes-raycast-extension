@@ -40,7 +40,7 @@ export default function ViewTasks() {
       } catch {
         const cached = await getCachedTasks();
         if (cached) {
-          const openTasks = cached.filter((t) => !t.completed);
+          const openTasks = cached.filter((t) => t.status !== "done");
           setTasks(openTasks);
         }
       } finally {
@@ -59,7 +59,7 @@ export default function ViewTasks() {
         const filters: FetchTasksFilters = { completed: false };
         if (projectFilter) filters.project = projectFilter;
         if (tagFilter) filters.tag = tagFilter;
-        if (priorityFilter) filters.priority = parseInt(priorityFilter, 10);
+        if (priorityFilter) filters.priority = priorityFilter;
 
         const result = await fetchTasks(filters);
         setTasks(result);
@@ -94,17 +94,17 @@ export default function ViewTasks() {
     const accessories: List.Item.Accessory[] = [];
 
     if (task.tags && task.tags.length > 0) {
-      for (const tagName of task.tags) {
+      for (const tagName of task.tags.slice(0, 3)) {
         accessories.push({ tag: { value: tagName } });
       }
     }
 
-    if (task.priority !== undefined) {
-      accessories.push({ text: `P${task.priority}` });
+    if (task.priority && task.priority !== "none") {
+      accessories.push({ text: task.priority });
     }
 
-    if (task.dueDate) {
-      accessories.push({ text: task.dueDate });
+    if (task.due) {
+      accessories.push({ text: task.due });
     }
 
     return accessories;
@@ -172,7 +172,7 @@ export default function ViewTasks() {
           <List.Item
             key={task.id}
             title={task.title}
-            subtitle={task.project}
+            subtitle={task.projects?.[0]?.replace(/^\[\[|\]\]$/g, "")}
             accessories={getAccessories(task)}
             actions={
               <ActionPanel>
@@ -205,9 +205,9 @@ export default function ViewTasks() {
                     />
                     {filterOptions?.priorities.map((p) => (
                       <Action
-                        key={p}
-                        title={`Priority ${p}`}
-                        onAction={() => setPriorityFilter(String(p))}
+                        key={p.id}
+                        title={p.label}
+                        onAction={() => setPriorityFilter(p.value)}
                       />
                     ))}
                   </ActionPanel.Submenu>
