@@ -1,12 +1,15 @@
 import { Detail, ActionPanel, Action, showToast, Toast, openExtensionPreferences, getPreferenceValues } from "@raycast/api";
 import { useState, useEffect } from "react";
-import { checkConnection } from "./api/client";
+import { checkConnection, fetchTasks } from "./api/client";
 import { Preferences } from "./types";
+import { getCachedTasks, isCacheValid } from "./cache";
 
 export default function CheckConnection() {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cachedTaskCount, setCachedTaskCount] = useState<number | null>(null);
+  const [cacheAgeMinutes, setCacheAgeMinutes] = useState<number | null>(null);
 
   const preferences = getPreferenceValues<Preferences>();
 
@@ -16,7 +19,22 @@ export default function CheckConnection() {
         const connected = await checkConnection();
         setIsConnected(connected);
         if (connected) {
-          await showToast({ style: Toast.Style.Success, title: "Connected to TaskNotes" });
+          const tasks = await fetchTasks({ completed: false });
+          await showToast({ style: Toast.Style.Success, title: `Connected - cached ${tasks.length} tasks` });
+        } else {
+          const cacheValid = await isCacheValid();
+          if (cacheValid) {
+            const cached = await getCachedTasks();
+            if (cached) {
+              setCachedTaskCount(cached.length);
+              const timestampStr = await import("@raycast/api").then(m => m.LocalStorage.getItem<string>("tasknotes_tasks_timestamp"));
+              if (timestampStr) {
+                const timestamp = parseInt(timestampStr, 10);
+                const ageMs = Date.now() - timestamp;
+                setCacheAgeMinutes(Math.floor(ageMs / 60000));
+              }
+            }
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Connection failed");
@@ -31,6 +49,8 @@ export default function CheckConnection() {
     setIsLoading(true);
     setError(null);
     setIsConnected(false);
+    setCachedTaskCount(null);
+    setCacheAgeMinutes(null);
   }
 
   useEffect(() => {
@@ -40,7 +60,22 @@ export default function CheckConnection() {
           const connected = await checkConnection();
           setIsConnected(connected);
           if (connected) {
-            await showToast({ style: Toast.Style.Success, title: "Connected to TaskNotes" });
+            const tasks = await fetchTasks({ completed: false });
+            await showToast({ style: Toast.Style.Success, title: `Connected - cached ${tasks.length} tasks` });
+          } else {
+            const cacheValid = await isCacheValid();
+            if (cacheValid) {
+              const cached = await getCachedTasks();
+              if (cached) {
+                setCachedTaskCount(cached.length);
+                const timestampStr = await import("@raycast/api").then(m => m.LocalStorage.getItem<string>("tasknotes_tasks_timestamp"));
+                if (timestampStr) {
+                  const timestamp = parseInt(timestampStr, 10);
+                  const ageMs = Date.now() - timestamp;
+                  setCacheAgeMinutes(Math.floor(ageMs / 60000));
+                }
+              }
+            }
           }
         } catch (err) {
           setError(err instanceof Error ? err.message : "Connection failed");
@@ -57,7 +92,28 @@ export default function CheckConnection() {
   }
 
   if (!isConnected || error) {
-    const markdown = `# Connection Failed
+    let markdown = "";
+
+    if (cachedTaskCount !== null) {
+      const ageText = cacheAgeMinutes === 0 ? "less than a minute" : `${cacheAgeMinutes} minute${cacheAgeMinutes === 1 ? "" : "s"}`;
+      markdown = `# Connection Unavailable
+
+Unable to connect to TaskNotes API at **localhost:${preferences.apiPort}**
+
+## Cached Data Available
+
+You have **${cachedTaskCount} tasks** cached from ${ageText} ago. Some commands may still work with cached data.
+
+## Troubleshooting
+
+1. Ensure Obsidian is running
+2. Ensure TaskNotes plugin is installed and enabled
+3. Ensure TaskNotes HTTP API is enabled in plugin settings
+4. Verify the port number matches TaskNotes settings (default: 8080)
+
+Use the action below to update your preferences if needed.`;
+    } else {
+      markdown = `# Connection Failed
 
 Unable to connect to TaskNotes API at **localhost:${preferences.apiPort}**
 
@@ -71,6 +127,7 @@ ${error ? `**Error:** ${error}` : ""}
 4. Verify the port number matches TaskNotes settings (default: 8080)
 
 Use the action below to update your preferences if needed.`;
+    }
 
     return (
       <Detail
