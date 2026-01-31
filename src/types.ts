@@ -20,3 +20,9 @@ export interface APIError {
 export interface Preferences {
   apiPort: string;
 }
+
+export interface FilterOptions {
+  projects: string[];
+  tags: string[];
+  priorities: number[];
+}

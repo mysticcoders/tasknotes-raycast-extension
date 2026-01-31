@@ -1,5 +1,11 @@
 import { getPreferenceValues } from "@raycast/api";
-import { Preferences, Task, TaskCreateInput, APIError } from "../types";
+import {
+  Preferences,
+  Task,
+  TaskCreateInput,
+  APIError,
+  FilterOptions,
+} from "../types";
 import { setCachedTasks } from "../cache";
 
 function getBaseUrl(): string {
@@ -137,6 +143,35 @@ export async function toggleTaskStatus(id: string): Promise<Task> {
     }
     throw createAPIError(
       "Failed to toggle task status: Network error or timeout",
+    );
+  }
+}
+
+export async function fetchFilterOptions(): Promise<FilterOptions> {
+  try {
+    const response = await fetchWithTimeout(
+      `${getBaseUrl()}/api/filter-options`,
+      {
+        method: "GET",
+      },
+    );
+
+    if (!response.ok) {
+      const error = createAPIError(
+        `Failed to fetch filter options: ${response.statusText}`,
+        String(response.status),
+      );
+      throw error;
+    }
+
+    const data = await response.json();
+    return data as FilterOptions;
+  } catch (error) {
+    if (error && typeof error === "object" && "message" in error) {
+      throw error;
+    }
+    throw createAPIError(
+      "Failed to fetch filter options: Network error or timeout",
     );
   }
 }
