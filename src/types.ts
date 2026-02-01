@@ -14,8 +14,22 @@ export interface Task {
   archived: boolean;
 }
 
+export interface ParsedTaskInput {
+  title: string;
+  due?: string;
+  scheduled?: string;
+  tags?: string[];
+  priority?: string;
+  projects?: string[];
+}
+
 export interface TaskCreateInput {
   title: string;
+  due?: string;
+  scheduled?: string;
+  tags?: string[];
+  priority?: string;
+  projects?: string[];
 }
 
 export interface APIError {

@@ -3,6 +3,7 @@ import {
   Preferences,
   Task,
   TaskCreateInput,
+  ParsedTaskInput,
   APIError,
   FilterOptions,
 } from "../types";
@@ -210,6 +211,39 @@ export async function fetchFilterOptions(): Promise<FilterOptions> {
     }
     throw createAPIError(
       "Failed to fetch filter options: Network error or timeout",
+    );
+  }
+}
+
+export async function parseNaturalLanguage(
+  input: string,
+): Promise<ParsedTaskInput> {
+  try {
+    const response = await fetchWithTimeout(`${getBaseUrl()}/api/nlp/parse`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ input }),
+    });
+
+    if (!response.ok) {
+      const error = createAPIError(
+        `Failed to parse natural language: ${response.statusText}`,
+        String(response.status),
+      );
+      throw error;
+    }
+
+    const data = await response.json();
+    return (data.data ?? data) as ParsedTaskInput;
+  } catch (error) {
+    if (error && typeof error === "object" && "message" in error) {
+      throw error;
+    }
+    throw createAPIError(
+      "Failed to parse natural language: Network error or timeout",
     );
   }
 }
