@@ -5,9 +5,10 @@ import {
   ActionPanel,
   Action,
   Icon,
+  getPreferenceValues,
 } from "@raycast/api";
 import { useState, useEffect } from "react";
-import { Task, FilterOptions } from "./types";
+import { Task, FilterOptions, Preferences } from "./types";
 import {
   fetchTasks,
   toggleTaskStatus,
@@ -16,7 +17,14 @@ import {
 } from "./api/client";
 import { getCachedTasks } from "./cache";
 
+function getObsidianUrl(task: Task, vaultName: string): string {
+  const vault = encodeURIComponent(vaultName);
+  const file = encodeURIComponent(task.path);
+  return `obsidian://open?vault=${vault}&file=${file}`;
+}
+
 export default function ViewTasks() {
+  const { vaultName } = getPreferenceValues<Preferences>();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -176,9 +184,15 @@ export default function ViewTasks() {
             accessories={getAccessories(task)}
             actions={
               <ActionPanel>
+                <Action.OpenInBrowser
+                  title="Open in Obsidian"
+                  icon={Icon.ArrowNe}
+                  url={getObsidianUrl(task, vaultName)}
+                />
                 <Action
                   title="Complete Task"
                   icon={Icon.Checkmark}
+                  shortcut={{ modifiers: ["cmd"], key: "return" }}
                   onAction={() => handleCompleteTask(task)}
                 />
                 <ActionPanel.Section title="Filters">
