@@ -157,7 +157,7 @@ export async function createTask(input: TaskCreateInput): Promise<Task> {
 export async function toggleTaskStatus(id: string): Promise<Task> {
   try {
     const response = await fetchWithTimeout(
-      `${getBaseUrl()}/api/tasks/${id}/toggle-status`,
+      `${getBaseUrl()}/api/tasks/${encodeURIComponent(id)}/toggle-status`,
       {
         method: "POST",
         headers: getAuthHeaders(),
